@@ -20,3 +20,24 @@
 # org.apache.cordova.media-capture
 
 Plugin documentation: [doc/index.md](doc/index.md)
+
+
+### iOS 平台修改文件的存储路径
+
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString *documentPath = [documentsDirectory stringByAppendingPathComponent:@"MediaCapture"];
+    BOOL isDir = FALSE;
+    BOOL isDirExist = [fileManager fileExistsAtPath:documentPath   isDirectory:&isDir];
+    if(!(isDirExist && isDir))
+    {
+        BOOL bCreateDir = [fileManager createDirectoryAtPath:documentPath
+                                 withIntermediateDirectories:YES
+                                                  attributes:nil
+                                                       error:nil];
+        if(!bCreateDir){
+            NSLog(@"Create Audio Directory Failed.");
+        }
+        NSLog(@"%@",documentPath);
+    }
