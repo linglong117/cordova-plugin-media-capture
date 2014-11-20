@@ -216,9 +216,12 @@
     
     // generate unique file name
     NSString* filePath;
+    NSString *fileName = [self getCurrentDateString];
     int i = 1;
     do {
-        filePath = [NSString stringWithFormat:@"%@/photo_%03d.jpg", documentPath, i++];
+        //filePath = [NSString stringWithFormat:@"%@/photo_%03d.jpg", documentPath, i++];
+        filePath = [NSString stringWithFormat:@"%@/%@.jpg", documentPath, fileName];
+
     } while ([fileMgr fileExistsAtPath:filePath]);
     
     if (![data writeToFile:filePath options:NSAtomicWrite error:&err]) {
@@ -624,10 +627,12 @@
         NSData* videoData=[NSData dataWithContentsOfURL:mediaURL];
         
         NSString* filePath;
+        NSString *fileName = [self getCurrentDateString];
         NSError *err;
         int i = 1;
         do {
-            filePath = [NSString stringWithFormat:@"%@/capturedvideo_%03d.MOV", documentPath, i++];
+            //filePath = [NSString stringWithFormat:@"%@/capturedvideo_%03d.MOV", documentPath, i++];
+            filePath = [NSString stringWithFormat:@"%@/%@.MOV", documentPath, fileName];
         } while ([fileManager fileExistsAtPath:filePath]);
         //
         //NSString * videoFile=[documentsDirectory stringByAppendingString:@"temp.mov"];
@@ -660,6 +665,30 @@
     }
     return @"";
 }
+
+
+/**
+ * @brief
+ @Expose
+ */
+- (NSString*)getCurrentDateString
+{
+    NSDate *date = [NSDate date];
+    NSTimeZone *zone = [NSTimeZone systemTimeZone];
+    NSInteger interval = [zone secondsFromGMTForDate: date];
+    NSDate *localeDate = [date  dateByAddingTimeInterval: interval];
+    NSLog(@"%@", localeDate);
+    
+    //实例化一个NSDateFormatter对象
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //设定时间格式,这里可以设置成自己需要的格式
+    [dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+    //用[NSDate date]可以获取系统当前时间
+    NSString *currentDateStr = [dateFormatter stringFromDate:date];
+    return currentDateStr;
+}
+
 
 @end
 
@@ -796,6 +825,28 @@
     [self setView:tmp];
 }
 
+
+/**
+ * @brief
+ @Expose
+ */
+- (NSString*)getCurrentDateString
+{
+    NSDate *date = [NSDate date];
+    NSTimeZone *zone = [NSTimeZone systemTimeZone];
+    NSInteger interval = [zone secondsFromGMTForDate: date];
+    NSDate *localeDate = [date  dateByAddingTimeInterval: interval];
+    NSLog(@"%@", localeDate);
+    //实例化一个NSDateFormatter对象
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //设定时间格式,这里可以设置成自己需要的格式
+    [dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+    //用[NSDate date]可以获取系统当前时间
+    NSString *currentDateStr = [dateFormatter stringFromDate:date];
+    return currentDateStr;
+}
+
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -840,9 +891,12 @@
     
     // generate unique file name
     NSString* filePath;
-    int i = 1;
+    NSString *fileName = [self getCurrentDateString];
+    //int i = 1;
     do {
-        filePath = [NSString stringWithFormat:@"%@/audio_%03d.wav", documentPath, i++];
+        //filePath = [NSString stringWithFormat:@"%@/audio_%03d.wav", documentPath, i++];
+        filePath = [NSString stringWithFormat:@"%@/%@.wav", documentPath, fileName];
+
     } while ([fileMgr fileExistsAtPath:filePath]);
     
     NSURL* fileURL = [NSURL fileURLWithPath:filePath isDirectory:NO];
