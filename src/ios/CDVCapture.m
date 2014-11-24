@@ -471,7 +471,6 @@
     NSFileManager* fileMgr = [[NSFileManager alloc] init];
     NSMutableDictionary* fileDict = [NSMutableDictionary dictionaryWithCapacity:5];
     
-    
     NSFileManager *fileManager = [NSFileManager defaultManager];
     
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -1073,7 +1072,8 @@
     if (flag) {
         NSString* filePath = [avRecorder.url path];
         // NSLog(@"filePath: %@", filePath);
-        NSDictionary* fileDict = [captureCommand getMediaDictionaryFromPath:filePath ofType:@"audio/wav"];
+        //NSDictionary* fileDict = [captureCommand getMediaDictionaryFromPath:filePath ofType:@"audio/wav"];
+        NSDictionary* fileDict = [captureCommand getMediaDictionaryFromPath:filePath ofType:nil];
         NSArray* fileArray = [NSArray arrayWithObject:fileDict];
         
         self.pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:fileArray];
