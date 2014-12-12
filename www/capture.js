@@ -32,7 +32,7 @@ var exec = require('cordova/exec'),
 function _capture(type, successCallback, errorCallback, options) {
     var win = function(pluginResult) {
         
-        alert("pluginResult >>>>> " + JSON.stringify(pluginResult));
+        //alert("pluginResult >>>>> " + JSON.stringify(pluginResult));
         var mediaFiles = [];
         var i;
         for (i = 0; i < pluginResult.length; i++) {
