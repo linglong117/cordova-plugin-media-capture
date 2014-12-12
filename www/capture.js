@@ -1,4 +1,4 @@
-/*
+cordova.define("org.apache.cordova.media-capture.capture", function(require, exports, module) { /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -32,10 +32,15 @@ var exec = require('cordova/exec'),
  */
 function _capture(type, successCallback, errorCallback, options) {
     var win = function(pluginResult) {
+        
+        alert("pluginResult >>>>> " + JSON.stringify(pluginResult));
         var mediaFiles = [];
         var i;
         for (i = 0; i < pluginResult.length; i++) {
-            var mediaFile = new MediaFile();
+            
+            var media = pluginResult[i];
+            
+            /*var mediaFile = new MediaFile();
             mediaFile.name = pluginResult[i].name;
 
             // Backwards compatibility
@@ -44,6 +49,25 @@ function _capture(type, successCallback, errorCallback, options) {
             mediaFile.type = pluginResult[i].type;
             mediaFile.lastModifiedDate = pluginResult[i].lastModifiedDate;
             mediaFile.size = pluginResult[i].size;
+            
+            mediaFiles.fileDuration = pluginResult[i].fileDuration;
+            mediaFiles.fileThumbnailPath = pluginResult[i].fileThumbnailPath;
+            
+            mediaFiles.push(mediaFile);*/
+            
+
+                            
+            var mediaFile = {
+                    name : media.name,
+                    localURL : media.localURL || media.fullPath,
+                    fullPath : media.fullPath,
+                    type : media.type,
+                    lastModifiedDate : media.lastModifiedDate,
+                    size : media.size,
+                    fileDuration : media.fileDuration,
+                    fileThumbnailPath : media.fileThumbnailPath
+                };
+            
             mediaFiles.push(mediaFile);
         }
         successCallback(mediaFiles);
@@ -94,3 +118,5 @@ Capture.prototype.captureVideo = function(successCallback, errorCallback, option
 
 
 module.exports = new Capture();
+
+});
