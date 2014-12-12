@@ -210,7 +210,7 @@
         NSLog(@"%@",documentPath);
     }
     
- 
+    
     NSError* err = nil;
     NSFileManager* fileMgr = [[NSFileManager alloc] init];
     
@@ -221,7 +221,7 @@
     do {
         //filePath = [NSString stringWithFormat:@"%@/photo_%03d.jpg", documentPath, i++];
         filePath = [NSString stringWithFormat:@"%@/%@.jpg", documentPath, fileName];
-
+        
     } while ([fileMgr fileExistsAtPath:filePath]);
     
     if (![data writeToFile:filePath options:NSAtomicWrite error:&err]) {
@@ -294,9 +294,9 @@
         // iOS 4.0
         if ([pickerController respondsToSelector:@selector(cameraCaptureMode)]) {
             pickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureModeVideo;
-             pickerController.videoQuality = UIImagePickerControllerQualityTypeHigh;
-             pickerController.cameraDevice = UIImagePickerControllerCameraDeviceRear;
-             pickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
+            pickerController.videoQuality = UIImagePickerControllerQualityTypeHigh;
+            pickerController.cameraDevice = UIImagePickerControllerCameraDeviceRear;
+            pickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
         }
         // CDVImagePicker specific property
         pickerController.callbackId = callbackId;
@@ -497,6 +497,17 @@
             CDVFile* cdvFile = (CDVFile*)command;
             NSString* mimeType = [cdvFile getMimeTypeFromPath:fullPath];
             [fileDict setObject:(mimeType != nil ? (NSObject*)mimeType : [NSNull null]) forKey:@"type"];
+            
+            //获取视频第一帧
+            if ([mimeType isEqualToString:@"video/quicktime"]) {
+                UIImage *img =  [self imageWithMediaURL:resolvedFileURL];
+                
+                //NSLog(@"dddd  %@",img);
+                
+                //                UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
+                //                imageView.frame = CGRectMake(50, 50, 300, 300);
+                //[self.viewController.view addSubview:imageView];
+            }
         }
     }
     NSDictionary* fileAttrs = [fileMgr attributesOfItemAtPath:fullPath error:nil];
@@ -505,8 +516,112 @@
     NSNumber* msDate = [NSNumber numberWithDouble:[modDate timeIntervalSince1970] * 1000];
     [fileDict setObject:msDate forKey:@"lastModifiedDate"];
     
+    
+    AVURLAsset *audioAsset =[AVURLAsset URLAssetWithURL:fileURL options:nil];
+    CMTime audioDuration = audioAsset.duration;
+    int audioDurationSeconds =CMTimeGetSeconds(audioDuration);
+    
+    NSString  *timelong = [NSString stringWithFormat:@"%d",audioDurationSeconds] ;
+    
+    NSLog(@"时长>>>>  %d",audioDurationSeconds);
+    [fileDict setObject:timelong forKey:@"fileDuration"];
+
+    
+    
     return fileDict;
 }
+
+/**
+ *  通过音乐地址，读取音乐数据，获得图片
+ *
+ *  @param url 音乐地址
+ *
+ *  @return音乐图片
+ */
+- (UIImage *)musicImageWithMusicURL:(NSURL *)url {
+    NSData *data = nil;
+    // 初始化媒体文件
+    AVURLAsset *mp3Asset = [AVURLAsset URLAssetWithURL:url options:nil];
+    // 读取文件中的数据
+    for (NSString *format in [mp3Asset availableMetadataFormats]) {
+        for (AVMetadataItem *metadataItem in [mp3Asset metadataForFormat:format]) {
+            //artwork这个key对应的value里面存的就是封面缩略图，其它key可以取出其它摘要信息，例如title - 标题
+            if ([metadataItem.commonKey isEqualToString:@"artwork"]) {
+                data = [(NSDictionary*)metadataItem.value objectForKey:@"data"];
+                break;
+            }
+        }
+    }
+    if (!data) {
+        // 如果音乐没有图片，就返回默认图片
+        return [UIImage imageNamed:@"default"];
+    }
+    return [UIImage imageWithData:data];
+}
+
+/**
+ *  通过视频的URL，获得视频缩略图
+ *
+ *  @param url 视频URL
+ *
+ *  @return首帧缩略图
+ */
+- (UIImage *)imageWithMediaURL:(NSURL *)url {
+    NSDictionary *opts = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO]
+                                                     forKey:AVURLAssetPreferPreciseDurationAndTimingKey];
+    // 初始化媒体文件
+    AVURLAsset *urlAsset = [AVURLAsset URLAssetWithURL:url options:opts];
+    // 根据asset构造一张图
+    AVAssetImageGenerator *generator = [AVAssetImageGenerator assetImageGeneratorWithAsset:urlAsset];
+    // 设定缩略图的方向
+    // 如果不设定，可能会在视频旋转90/180/270°时，获取到的缩略图是被旋转过的，而不是正向的（自己的理解）
+    generator.appliesPreferredTrackTransform = YES;
+    // 设置图片的最大size(分辨率)
+    generator.maximumSize = CGSizeMake(600, 450);
+    // 初始化error
+    NSError *error = nil;
+    // 根据时间，获得第N帧的图片
+    // CMTimeMake(a, b)可以理解为获得第a/b秒的frame
+    CGImageRef img = [generator copyCGImageAtTime:CMTimeMake(0, 10000) actualTime:NULL error:&error];
+    // 构造图片
+    UIImage *image = [UIImage imageWithCGImage: img];
+    return image;
+}
+
+
+
+-(UIImage *)getImage:(NSString *)videoURL
+{
+    AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:[NSURL fileURLWithPath:videoURL] options:nil];
+    
+    AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+    
+    gen.appliesPreferredTrackTransform = YES;
+    
+    CMTime time = CMTimeMakeWithSeconds(0.0, 600);
+    
+    NSError *error = nil;
+    
+    CMTime actualTime;
+    
+    CGImageRef image = [gen copyCGImageAtTime:time actualTime:&actualTime error:&error];
+    
+    UIImage *thumb = [[UIImage alloc] initWithCGImage:image];
+    
+    CGImageRelease(image);
+    
+    return thumb;
+}
+
+
+//+(UIImage *)fFirstVideoFrame:(NSString *)path
+//{
+//    MPMoviePlayerController *mp = [[MPMoviePlayerController alloc] initWithContentURL:[NSURL fileURLWithPath:path]];
+//    UIImage *img = [mp thumbnailImageAtTime:0.0 timeOption:MPMovieTimeOptionNearest[object Object]KeyFrame];
+//    return img;
+//}
+
+
 
 - (void)imagePickerController:(UIImagePickerController*)picker didFinishPickingImage:(UIImage*)image editingInfo:(NSDictionary*)editingInfo
 {
@@ -552,11 +667,11 @@
         //NSString* moviePath = [[info objectForKey:UIImagePickerControllerMediaURL] path];
         NSString* moviePath = [[info objectForKey:UIImagePickerControllerMediaURL] absoluteString];
         NSURL *videoURL = [info objectForKey:UIImagePickerControllerMediaURL];
-//        NSData *webData = [NSData dataWithContentsOfURL:videoURL];
-//        //NSData *video = [[NSString alloc] initWithContentsOfURL:videoURL];
-//        //[webData writeToFile:[self findUniqueMoviePath] atomically:YES];
-//        CFShow((__bridge CFTypeRef)([[NSFileManager defaultManager] directoryContentsAtPath:[NSHomeDirectory() stringByAppendingString:@"/Documents"]]));
-//        //CFShow([[NSFileManager defaultManager] directoryContentsAtPath:[NSHomeDirectory() stringByAppendingString:@"/Documents"]]);
+        //        NSData *webData = [NSData dataWithContentsOfURL:videoURL];
+        //        //NSData *video = [[NSString alloc] initWithContentsOfURL:videoURL];
+        //        //[webData writeToFile:[self findUniqueMoviePath] atomically:YES];
+        //        CFShow((__bridge CFTypeRef)([[NSFileManager defaultManager] directoryContentsAtPath:[NSHomeDirectory() stringByAppendingString:@"/Documents"]]));
+        //        //CFShow([[NSFileManager defaultManager] directoryContentsAtPath:[NSHomeDirectory() stringByAppendingString:@"/Documents"]]);
         moviePath = [self videoPath:videoURL];
         if (moviePath && [moviePath length]>0) {
             result = [self processVideo:moviePath forCallbackId:callbackId];
@@ -586,7 +701,7 @@
  *
  */
 -(Boolean)createMediaCaptureDir{
-   
+    
     //BOOL success;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *documentsDirectory=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
@@ -895,7 +1010,7 @@
     do {
         //filePath = [NSString stringWithFormat:@"%@/audio_%03d.wav", documentPath, i++];
         filePath = [NSString stringWithFormat:@"%@/%@.wav", documentPath, fileName];
-
+        
     } while ([fileMgr fileExistsAtPath:filePath]);
     
     NSURL* fileURL = [NSURL fileURLWithPath:filePath isDirectory:NO];
