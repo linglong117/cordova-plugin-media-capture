@@ -20,11 +20,15 @@ package org.apache.cordova.mediacapture;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import android.os.Build;
 
@@ -38,6 +42,8 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.simpleevent.xattender.R.string;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -78,6 +84,8 @@ public class Capture extends CordovaPlugin {
 	private JSONArray results; // The array of results to be returned to the
 								// user
 	private int numPics; // Number of pictures before capture activity
+	
+	private String cur_fileName="";
 
 	// private CordovaInterface cordova;
 
@@ -230,6 +238,7 @@ public class Capture extends CordovaPlugin {
 		return cache.getAbsolutePath();
 	}
 
+	
 	/**
 	 * Sets up an intent to capture images. Result handled by onActivityResult()
 	 */
@@ -241,7 +250,11 @@ public class Capture extends CordovaPlugin {
 				android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 
 		// Specify file so that large image is captured and returned
+		
+		String imageName = getStringDate();
+		cur_fileName = imageName;
 		File photo = new File(getTempDirectoryPath(), "Capture.jpg");
+		//File photo = new File(getTempDirectoryPath(), cur_fileName+".jpg");
 		try {
 			// the ACTION_IMAGE_CAPTURE is run under different credentials and
 			// has to be granted write permissions
@@ -276,6 +289,22 @@ public class Capture extends CordovaPlugin {
 				CAPTURE_VIDEO);
 	}
 
+	
+	
+	/**
+	  * 获取现在时间
+	  * 
+	  * @return返回字符串格式 yyyy-MM-dd HH:mm:ss
+	  */
+	public static String getStringDate() {
+	  Date currentTime = new Date();
+	  //SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	  SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+	  String dateString = formatter.format(currentTime);
+	  return dateString;
+	}
+	
+	
 	/**
 	 * Called when the video view exits.
 	 *
@@ -341,8 +370,7 @@ public class Capture extends CordovaPlugin {
 							// compression setting of 50 - no way to change it)
 							ContentValues values = new ContentValues();
 							values.put(
-									android.provider.MediaStore.Images.Media.MIME_TYPE,
-									IMAGE_JPEG);
+									android.provider.MediaStore.Images.Media.MIME_TYPE,IMAGE_JPEG);
 							Uri uri = null;
 							try {
 								uri = that.cordova
@@ -368,10 +396,11 @@ public class Capture extends CordovaPlugin {
 									return;
 								}
 							}
-							FileInputStream fis = new FileInputStream(
-									getTempDirectoryPath() + "/Capture.jpg");
-							OutputStream os = that.cordova.getActivity()
-									.getContentResolver().openOutputStream(uri);
+							
+							FileInputStream fis = new FileInputStream(getTempDirectoryPath() + "/Capture.jpg");
+							//FileInputStream fis = new FileInputStream(getTempDirectoryPath() + "/"+cur_fileName+".jpg");
+
+							OutputStream os = that.cordova.getActivity().getContentResolver().openOutputStream(uri);
 							byte[] buffer = new byte[4096];
 							int len;
 							while ((len = fis.read(buffer)) != -1) {
@@ -574,17 +603,17 @@ public class Capture extends CordovaPlugin {
 			}else {
 				obj.put("fileDuration", "0");
 			}
-			
+		    obj.put("fileThumbnailPath", "");
 			if (data.toString().contains("/video/")) {
 				 ImageView videoThumbnail = null;  
 //				  imageThumbnail = (ImageView) findViewById(R.id.image_thumbnail);  
 //			        videoThumbnail = (ImageView) findViewById(R.id.video_thumbnail);  
-				  
-				  Bitmap videoBitmap = getVideoThumbnail(fp.getPath().toString(), 100, 100, MediaStore.Images.Thumbnails.MICRO_KIND);
-				 
-				    Log.d("videoBitmap  >>> ", videoBitmap.toString());
+				  Bitmap videoBitmap = getVideoThumbnail(fp.getPath().toString(), 300, 300, MediaStore.Images.Thumbnails.MINI_KIND);
+				    //Log.d("videoBitmap  >>> ", videoBitmap.toString());
 			        //videoThumbnail.setImageBitmap(getVideoThumbnail(fp.getPath().toString(), 100, 100, MediaStore.Images.Thumbnails.MICRO_KIND));  
-				    
+				    String  thumPath = saveThumbnail(videoBitmap);
+				    obj.put("fileThumbnailPath", thumPath);
+				    Log.d("thumPath >>>> ", thumPath);
 			}
 			
 //			if (data.toString().contains("/video/")) {
@@ -603,6 +632,96 @@ public class Capture extends CordovaPlugin {
 		return obj;
 	}
 	
+	
+	private String saveThumbnail(Bitmap bitmap)
+	{
+		 //Bitmap bitmap = (Bitmap) bundle.get("data");// 获取相机返回的数据，并转换为Bitmap图片格式
+         FileOutputStream os = null;
+         
+         //照片的命名，目标文件夹下，以当前时间数字串为名称，即可确保每张照片名称不相同。网上流传的其他Demo这里的照片名称都写死了，则会发生无论拍照多少张，后一张总会把前一张照片覆盖。细心的同学还可以设置这个字符串，比如加上“ＩＭＧ”字样等；
+         //然后就会发现ｓｄ卡中ｍｙｉｍａｇｅ这个文件夹下，会保存刚刚调用相机拍出来的照片，照片名称不会重复。
+         String str=null;
+         Date date=null;
+         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");//获取当前时间，进一步转化为字符串
+         date =new Date();
+         str=format.format(date);
+         //String fileName = "/sdcard/myImage/"+str+".jpg";
+         String fileName = str+".jpg";
+//     	String imageName = getStringDate();
+//		cur_fileName = imageName;
+         //FileInputStream fis = new FileInputStream(getTempDirectoryPath() + "/Capture.jpg");
+ 		 File photo = new File(getTempDirectoryPath(), fileName);
+ 		 //new File(dir, name)
+         //File file = new File("/sdcard/myImage/");
+         //file.mkdirs();// 创建文件夹，名称为myimage
+ 		 
+			final Capture that = this;
+
+ 		ContentValues values = new ContentValues();
+		values.put(
+				android.provider.MediaStore.Images.Media.MIME_TYPE,IMAGE_JPEG);
+		Uri uri = null;
+		try {
+			uri = that.cordova
+					.getActivity()
+					.getContentResolver()
+					.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+							values);
+		} catch (UnsupportedOperationException e) {
+			LOG.d(LOG_TAG,
+					"Can't write to external media storage.");
+			try {
+				uri = that.cordova
+						.getActivity()
+						.getContentResolver()
+						.insert(android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI,
+								values);
+			} catch (UnsupportedOperationException ex) {
+				LOG.d(LOG_TAG,
+						"Can't write to internal media storage.");
+				that.fail(createErrorObject(
+						CAPTURE_INTERNAL_ERR,
+						"Error capturing image - no media storage found."));
+				return "";
+			}
+		}
+		try {
+			OutputStream oos = that.cordova.getActivity().getContentResolver().openOutputStream(uri);
+			
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 100, oos);// 把数据写入文件
+			
+			File fp = webView.getResourceApi().mapUriToFile(uri);
+
+	        String   imgPath =  fp.getPath();
+	             
+	        return  imgPath;
+			
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+       
+//        try {
+//        	 os = new FileOutputStream(photo.getPath().toString());
+//             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);// 把数据写入文件
+//             String   imgPath =  photo.getPath();
+//             return  imgPath;
+//             
+//         } catch (FileNotFoundException e) {
+//             e.printStackTrace();
+//         } finally {
+//             try {
+//            	 os.flush();
+//            	 os.close();
+//             } catch (IOException e) {
+//                 e.printStackTrace();
+//             }
+//         }
+        //String   imgPath =  photo.getPath();
+        return  "";
+
+		
+	}
 	
 	/** 
      * 根据指定的图像路径和大小来获取缩略图 

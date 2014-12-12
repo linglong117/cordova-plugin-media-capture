@@ -490,6 +490,9 @@
     if (url) {
         [fileDict setObject:[url absoluteURL] forKey:@"localURL"];
     }
+    
+    [fileDict setObject:@"" forKey:@"fileThumbnailPath"];
+
     // determine type
     if (!type) {
         id command = [self.commandDelegate getCommandInstance:@"File"];
@@ -500,9 +503,13 @@
             
             //获取视频第一帧
             if ([mimeType isEqualToString:@"video/quicktime"]) {
-                UIImage *img =  [self imageWithMediaURL:resolvedFileURL];
                 
+                UIImage *img =  [self imageWithMediaURL:resolvedFileURL];
                 //NSLog(@"dddd  %@",img);
+                NSString *thumb_path = [self doSaveThumb:img];
+                //if (thumb_path && [thumb_path length]>0) {
+                [fileDict setObject:thumb_path forKey:@"fileThumbnailPath"];
+                //}
                 
                 //                UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
                 //                imageView.frame = CGRectMake(50, 50, 300, 300);
@@ -522,12 +529,9 @@
     int audioDurationSeconds =CMTimeGetSeconds(audioDuration);
     
     NSString  *timelong = [NSString stringWithFormat:@"%d",audioDurationSeconds] ;
-    
     NSLog(@"时长>>>>  %d",audioDurationSeconds);
     [fileDict setObject:timelong forKey:@"fileDuration"];
 
-    
-    
     return fileDict;
 }
 
@@ -577,7 +581,7 @@
     // 如果不设定，可能会在视频旋转90/180/270°时，获取到的缩略图是被旋转过的，而不是正向的（自己的理解）
     generator.appliesPreferredTrackTransform = YES;
     // 设置图片的最大size(分辨率)
-    generator.maximumSize = CGSizeMake(600, 450);
+    generator.maximumSize = CGSizeMake(300, 300);
     // 初始化error
     NSError *error = nil;
     // 根据时间，获得第N帧的图片
@@ -613,6 +617,68 @@
     return thumb;
 }
 
+
+/*
+ *
+*/
+- (NSString *)doSaveThumb:(UIImage*)image
+{
+    
+    // save the image to photo album
+    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    
+    NSData* data = nil;
+    data = UIImageJPEGRepresentation(image, 0.5);
+    // write to temp directory and return URI
+    //NSString* docsPath = [NSTemporaryDirectory()stringByStandardizingPath];   // use file system temporary directory
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString *documentPath = [documentsDirectory stringByAppendingPathComponent:@"MediaCapture"];
+    BOOL isDir = FALSE;
+    BOOL isDirExist = [fileManager fileExistsAtPath:documentPath   isDirectory:&isDir];
+    if(!(isDirExist && isDir))
+    {
+        BOOL bCreateDir = [fileManager createDirectoryAtPath:documentPath
+                                 withIntermediateDirectories:YES
+                                                  attributes:nil
+                                                       error:nil];
+        if(!bCreateDir){
+            NSLog(@"Create Audio Directory Failed.");
+        }
+        NSLog(@"%@",documentPath);
+    }
+    
+    NSError* err = nil;
+    NSFileManager* fileMgr = [[NSFileManager alloc] init];
+    
+    // generate unique file name
+    NSString* filePath;
+    NSString *fileName = [self getCurrentDateString];
+    do {
+        //filePath = [NSString stringWithFormat:@"%@/photo_%03d.jpg", documentPath, i++];
+        filePath = [NSString stringWithFormat:@"%@/%@_thumb.jpg", documentPath, fileName];
+        
+    } while ([fileMgr fileExistsAtPath:filePath]);
+    
+    if (![data writeToFile:filePath options:NSAtomicWrite error:&err]) {
+        //result = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageToErrorObject:CAPTURE_INTERNAL_ERR];
+        if (err) {
+            NSLog(@"Error saving image: %@", [err localizedDescription]);
+        }
+    } else {
+        // create MediaFile object
+        // 
+        // NSDictionary* fileDict = [self getMediaDictionaryFromPath:filePath ofType:mimeType];
+        // NSArray* fileArray = [NSArray arrayWithObject:fileDict];
+        //result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:fileArray];
+        return filePath;
+    }
+    return  @"";
+    
+}
+
+ 
 
 //+(UIImage *)fFirstVideoFrame:(NSString *)path
 //{
