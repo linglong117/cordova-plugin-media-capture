@@ -146,6 +146,8 @@
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageToErrorObject:CAPTURE_NOT_SUPPORTED];
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     } else {
+        
+        
         if (pickerController == nil) {
             pickerController = [[CDVImagePicker alloc] init];
         }
@@ -164,11 +166,51 @@
          pickerController.cameraDevice = UIImagePickerControllerCameraDeviceRear;
          pickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
          }*/
+        
+//        BOOL cameraAvailableFlag = [UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera];
+//        if (cameraAvailableFlag)
+//            [self performSelector:@selector(showcamera) withObject:nil afterDelay:0.3];
+        
+        
         // CDVImagePicker specific property
         pickerController.callbackId = callbackId;
         
-        [self.viewController presentViewController:pickerController animated:YES completion:nil];
+        
+        // Snapshotting a view that has not been rendered results in an empty snapshot. Ensure your view has been rendered at least once before snapshotting or snapshot after screen updates.
+//        if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera]) {
+//            if ([[[UIDevice currentDevice] systemVersion] floatValue] !=7){
+//                [self initCamera];
+//            }
+//            
+//            [self.viewController presentViewController:pickerController animated:YES completion:nil];
+//
+//            //[self presentViewController:pickerController animated:YES completion:nil];
+//            
+//        }else {
+//            //[BlmFuncView showWarn:@"你没有摄像头" andTime:1.5];
+//            NSLog(@"你没有摄像头");
+ //       }
+        
+        double delayInSeconds = 0.5;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [self.viewController presentViewController:pickerController animated:YES completion:nil];
+        });
+        
+        //[self.viewController presentViewController:pickerController animated:YES completion:nil];
+
+    
     }
+}
+
+-(void)initCamera
+{
+    //if (pickerController==nil) {
+        pickerController = [[CDVImagePicker alloc] init];
+        pickerController.delegate = self;
+        pickerController.allowsEditing = YES;
+        pickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+    //}
 }
 
 /* Process a still image from the camera.
