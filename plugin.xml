@@ -77,6 +77,12 @@ xmlns:rim="http://www.blackberry.com/ns/widgets"
 
         <source-file src="src/android/Capture.java" target-dir="src/org/apache/cordova/mediacapture" />
         <source-file src="src/android/FileHelper.java" target-dir="src/org/apache/cordova/mediacapture" />
+
+        <source-file src="src/android/capture/values-zh-rCN/string.json" target-dir="assets/res-plugin/capture/values-zh-rCN"/>
+        <source-file src="src/android/capture/values-zh-rCN/strings.xml" target-dir="assets/res-plugin/capture/values-zh-rCN"/>
+        <source-file src="src/android/capture/values/strings.xml" target-dir="assets/res-plugin/capture/values"/>
+
+
     </platform>
     
     <!-- amazon-fireos -->
