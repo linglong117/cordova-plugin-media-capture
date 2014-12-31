@@ -223,7 +223,7 @@
     CDVPluginResult* result = nil;
     
     // save the image to photo album
-    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    //UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
     
     NSData* data = nil;
     if (mimeType && [mimeType isEqualToString:@"image/png"]) {
