@@ -413,7 +413,8 @@ public class Capture extends CordovaPlugin {
 							// Add image to results
 							results.put(createMediaFile(uri));
 
-							checkForDuplicateImage();
+							//暂时注释,图片存缩略图会把原图给冲掉
+							//checkForDuplicateImage();
 
 							if (results.length() >= limit) {
 								// Send Uri back to JavaScript for viewing image
@@ -612,6 +613,18 @@ public class Capture extends CordovaPlugin {
 				    //Log.d("videoBitmap  >>> ", videoBitmap.toString());
 			        //videoThumbnail.setImageBitmap(getVideoThumbnail(fp.getPath().toString(), 100, 100, MediaStore.Images.Thumbnails.MICRO_KIND));  
 				    String  thumPath = saveThumbnail(videoBitmap);
+				    obj.put("fileThumbnailPath", thumPath);
+				    Log.d("thumPath >>>> ", thumPath);
+			}
+			
+			if (data.toString().contains("images")) {
+				 ImageView videoThumbnail = null;  
+//				  imageThumbnail = (ImageView) findViewById(R.id.image_thumbnail);  
+//			        videoThumbnail = (ImageView) findViewById(R.id.video_thumbnail);  
+				  Bitmap imageThumbnail = getImageThumbnail(fp.getPath().toString(), 300, 300);
+				    //Log.d("videoBitmap  >>> ", videoBitmap.toString());
+			        //videoThumbnail.setImageBitmap(getVideoThumbnail(fp.getPath().toString(), 100, 100, MediaStore.Images.Thumbnails.MICRO_KIND));  
+				    String  thumPath = saveThumbnail(imageThumbnail);
 				    obj.put("fileThumbnailPath", thumPath);
 				    Log.d("thumPath >>>> ", thumPath);
 			}
@@ -839,8 +852,7 @@ public class Capture extends CordovaPlugin {
 			int id = Integer.valueOf(cursor.getString(cursor
 					.getColumnIndex(MediaStore.Images.Media._ID))) - 1;
 			Uri uri = Uri.parse(contentStore + "/" + id);
-			this.cordova.getActivity().getContentResolver()
-					.delete(uri, null, null);
+			this.cordova.getActivity().getContentResolver().delete(uri, null, null);
 		}
 	}
 

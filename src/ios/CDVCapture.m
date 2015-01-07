@@ -557,6 +557,24 @@
                 //                imageView.frame = CGRectMake(50, 50, 300, 300);
                 //[self.viewController.view addSubview:imageView];
             }
+            
+            //获取图片缩略图
+            
+            if([mimeType rangeOfString:@"image"].location !=NSNotFound)//_roaldSearchText
+            {
+                UIImage *img = [self thumbnailWithImage:nil size:CGSizeMake(300, 300) path:path];
+                //UIImage *img = [self thumbnailWithImageWithoutScale:nil size:CGSizeMake(300, 300) path:path];
+
+                    //NSLog(@"dddd  %@",img);
+                    NSString *thumb_path = [self doSaveThumb:img];
+                    //if (thumb_path && [thumb_path length]>0) {
+                    [fileDict setObject:thumb_path forKey:@"fileThumbnailPath"];
+                    //}
+//                
+//                UIImageView *imageView = [[UIImageView alloc] initWithImage:img];
+//                imageView.frame = CGRectMake(10, 100, 300, 300);
+//                [self.viewController.view addSubview:imageView];
+            }
         }
     }
     NSDictionary* fileAttrs = [fileMgr attributesOfItemAtPath:fullPath error:nil];
@@ -576,6 +594,63 @@
 
     return fileDict;
 }
+
+
+/**
+ * 
+ */
+//1.自动缩放到指定大小
+- (UIImage *)thumbnailWithImage:(UIImage *)image size:(CGSize)asize path:(NSString*) path
+{
+    image = [UIImage imageWithContentsOfFile:path];
+    
+    UIImage *newimage;
+    
+    if (nil == image) {
+        newimage = nil;
+    }else{
+        UIGraphicsBeginImageContext(asize);
+        [image drawInRect:CGRectMake(0, 0, asize.width, asize.height)];
+        newimage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    }
+    return newimage;
+}
+
+//2.保持原来的长宽比，生成一个缩略图
+- (UIImage *)thumbnailWithImageWithoutScale:(UIImage *)image size:(CGSize)asize path:(NSString*) path
+{
+    image = [UIImage imageWithContentsOfFile:path];
+
+    UIImage *newimage;
+    if (nil == image) {
+        newimage = nil;
+    }else{
+        CGSize oldsize = image.size;
+        CGRect rect;
+        if (asize.width/asize.height > oldsize.width/oldsize.height) {
+            rect.size.width = asize.height*oldsize.width/oldsize.height;
+            rect.size.height = asize.height;
+            rect.origin.x = (asize.width - rect.size.width)/2;
+            rect.origin.y = 0;
+        }else{
+            rect.size.width = asize.width;
+            rect.size.height = asize.width*oldsize.height/oldsize.width;
+            rect.origin.x = 0;
+            rect.origin.y = (asize.height - rect.size.height)/2;
+        }
+        UIGraphicsBeginImageContext(asize);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        CGContextSetFillColorWithColor(context, [[UIColor clearColor] CGColor]);
+        UIRectFill(CGRectMake(0, 0, asize.width, asize.height));//clear background
+        [image drawInRect:rect];
+        newimage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    }
+    return newimage;
+}
+
+
 
 /**
  *  通过音乐地址，读取音乐数据，获得图片
@@ -633,8 +708,6 @@
     UIImage *image = [UIImage imageWithCGImage: img];
     return image;
 }
-
-
 
 -(UIImage *)getImage:(NSString *)videoURL
 {
