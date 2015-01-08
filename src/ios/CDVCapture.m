@@ -222,6 +222,9 @@
 {
     CDVPluginResult* result = nil;
     
+    /*
+     *  不保存到 photosAlbum  2015-01-08 11:06:54   by xyl======
+     **/
     // save the image to photo album
     //UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
     
@@ -739,8 +742,11 @@
 - (NSString *)doSaveThumb:(UIImage*)image
 {
     
+    /*
+     *  不保存到 photosAlbum  2015-01-08 11:06:54   by xyl======
+     **/
     // save the image to photo album
-    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    //UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
     
     NSData* data = nil;
     data = UIImageJPEGRepresentation(image, 0.5);
@@ -942,20 +948,23 @@
         NSString *DocumentsDirectory = [paths objectAtIndex:0];
         
         //创建ALAssetsLibrary对象并将视频保存到媒体库
-        
         ALAssetsLibrary* assetsLibrary = [[ALAssetsLibrary alloc] init];
         
         //textField1.text=[mediaURL absoluteString].lastPathComponent;
         //videoToEmbedFullPath=[mediaURL absoluteString];
         
-        [assetsLibrary writeVideoAtPathToSavedPhotosAlbum:mediaURL completionBlock:^(NSURL *assetURL, NSError *error) {
-            if (!error) {
-                NSLog(@"captured video saved with no error.");
-            }else
-            {
-                NSLog(@"error occured while saving the video:%@", error);
-            }
-        }];
+        /*
+         *  不保存到 photosAlbum  2015-01-08 11:06:54   by xyl======
+         **/
+//        [assetsLibrary writeVideoAtPathToSavedPhotosAlbum:mediaURL completionBlock:^(NSURL *assetURL, NSError *error) {
+//            if (!error) {
+//                NSLog(@"captured video saved with no error.");
+//            }else
+//            {
+//                NSLog(@"error occured while saving the video:%@", error);
+//            }
+//        }];
+        
         return filePath;
     }
     return @"";
